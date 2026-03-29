@@ -1,4 +1,4 @@
-export default function Settings({ gasUrl, setGasUrl, apiKey, setApiKey }) {
+export default function Settings({ gasUrl, setGasUrl, apiKey, setApiKey, templateDocUrl, setTemplateDocUrl }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 700 }}>
       <div className="card">
@@ -17,6 +17,13 @@ export default function Settings({ gasUrl, setGasUrl, apiKey, setApiKey }) {
             <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)}
               placeholder="sk-ant-..." />
             <span className="hint">Wird lokal im Browser gespeichert, nicht übertragen.</span>
+          </div>
+
+          <div className="field">
+            <label>Musterdokument (Google Docs) – optional</label>
+            <input type="url" value={templateDocUrl} onChange={e => setTemplateDocUrl(e.target.value)}
+              placeholder="https://docs.google.com/document/d/XXXX/edit" />
+            <span className="hint">Wenn gesetzt, wird beim Erstellen eine Kopie dieses Docs erzeugt (z.B. mit Briefkopf/Format). Leer lassen = Standard-Dokument.</span>
           </div>
         </div>
       </div>

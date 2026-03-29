@@ -46,6 +46,7 @@ export default function App() {
   const [data, setData] = useState({ ...EMPTY_DATA })
   const [gasUrl, setGasUrl] = useState(localStorage.getItem('gasUrl') || '')
   const [apiKey, setApiKey] = useState(localStorage.getItem('apiKey') || '')
+  const [templateDocUrl, setTemplateDocUrl] = useState(localStorage.getItem('templateDocUrl') || '')
   const [kundenId, setKundenId] = useState(localStorage.getItem('kundenId') || 'default')
   const [saved, setSaved] = useState(false)
 
@@ -160,8 +161,17 @@ export default function App() {
         {tab === 'upload'   && <DocumentUpload data={data} onUpdate={updateData} apiKey={apiKey} onNext={() => setTab('form')} />}
         {tab === 'form'     && <DataForm data={data} onUpdate={updateData} onNext={() => setTab('preview')} />}
         {tab === 'preview'  && <DataPreview data={data} onNext={() => setTab('generate')} />}
-        {tab === 'generate' && <GenerateDoc data={data} gasUrl={gasUrl} kundenId={kundenId} />}
-        {tab === 'settings' && <Settings gasUrl={gasUrl} setGasUrl={v => { setGasUrl(v); localStorage.setItem('gasUrl', v) }} apiKey={apiKey} setApiKey={v => { setApiKey(v); localStorage.setItem('apiKey', v) }} />}
+        {tab === 'generate' && <GenerateDoc data={data} gasUrl={gasUrl} kundenId={kundenId} templateDocUrl={templateDocUrl} />}
+        {tab === 'settings' && (
+          <Settings
+            gasUrl={gasUrl}
+            setGasUrl={v => { setGasUrl(v); localStorage.setItem('gasUrl', v) }}
+            apiKey={apiKey}
+            setApiKey={v => { setApiKey(v); localStorage.setItem('apiKey', v) }}
+            templateDocUrl={templateDocUrl}
+            setTemplateDocUrl={v => { setTemplateDocUrl(v); localStorage.setItem('templateDocUrl', v) }}
+          />
+        )}
       </div>
     </div>
   )

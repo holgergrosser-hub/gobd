@@ -1,8 +1,15 @@
 import { useState } from 'react'
 
-export default function GenerateDoc({ data, gasUrl, kundenId }) {
+export default function GenerateDoc({ data, gasUrl, kundenId, templateDocUrl }) {
   const [status, setStatus] = useState('idle')
   const [log, setLog] = useState([])
+
+  function extractGoogleDocId(urlOrId) {
+    const s = (urlOrId || '').trim()
+    if (!s) return ''
+    const m = s.match(/\/d\/([a-zA-Z0-9-_]+)/)
+    return m ? m[1] : s
+  }
 
   function addLog(msg, type = 'info') {
     setLog(l => [...l, { msg, type, time: new Date().toLocaleTimeString('de-DE') }])
@@ -20,6 +27,8 @@ export default function GenerateDoc({ data, gasUrl, kundenId }) {
         const fd = new FormData()
         fd.append('action', 'generate_doc')
         fd.append('kundenId', kundenId || 'default')
+        const templateDocId = extractGoogleDocId(templateDocUrl)
+        if (templateDocId) fd.append('templateDocId', templateDocId)
         fd.append('data', JSON.stringify(data))
         const res = await fetch(gasUrl, { method: 'POST', body: fd })
         const json = await res.json().catch(() => ({}))

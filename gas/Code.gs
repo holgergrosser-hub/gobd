@@ -14,6 +14,10 @@ const TAB_DATEN    = 'GoBD_Daten'
 const TAB_LOG      = 'Änderungsprotokoll'
 const TAB_KUNDEN   = 'Kundenliste'
 
+// Optional: Google Docs Musterdokument (ID aus der URL zwischen /d/ und /edit)
+// Wenn gesetzt, wird beim Erstellen zuerst eine Kopie des Musterdocs erstellt.
+const TEMPLATE_DOC_ID = ''
+
 function assertSheetIdConfigured() {
   if (!SHEET_ID || SHEET_ID === 'HIER_DEINE_SHEET_ID_EINTRAGEN') {
     throw new Error('SHEET_ID ist nicht gesetzt. Bitte in Code.gs die SHEET_ID aus der Google-Sheet-URL eintragen (zwischen /d/ und /edit).')
@@ -26,19 +30,20 @@ function jsonErr(msg)    { return ContentService.createTextOutput(JSON.stringify
 // ── Routing ──────────────────────────────────────────────────────────────
 function doPost(e) {
   try {
-    let action, data, kundenId
+    let action, data, kundenId, templateDocId
     try {
       const b = JSON.parse(e.postData.contents)
-      action=b.action; data=b.data; kundenId=b.kundenId
+      action=b.action; data=b.data; kundenId=b.kundenId; templateDocId=b.templateDocId
     } catch {
       action=e.parameter.action; kundenId=e.parameter.kundenId||'default'
+      templateDocId=e.parameter.templateDocId||''
       data=e.parameter.data?JSON.parse(e.parameter.data):null
     }
     Logger.log('Action:%s Kunde:%s', action, kundenId)
     if (action==='save')          return doSave(data, kundenId||'default')
     if (action==='load')          return doLoad(kundenId||'default')
     if (action==='list_kunden')   return doListKunden()
-    if (action==='generate_doc')  return doGenerateDoc(data, kundenId||'default')
+    if (action==='generate_doc')  return doGenerateDoc(data, kundenId||'default', templateDocId)
     if (action==='ping')          return jsonOk({message:'API läuft',version:'2.0'})
     return jsonErr('Unbekannte Action: '+action)
   } catch(err) { Logger.log('FEHLER: %s',err.toString()); return jsonErr(err.toString()) }
@@ -101,14 +106,20 @@ function doListKunden() {
 }
 
 // ── GENERATE DOC ─────────────────────────────────────────────────────────
-function doGenerateDoc(data, kid) {
+function doGenerateDoc(data, kid, templateDocId) {
   if (!data) return jsonErr('Keine Daten')
   try { assertSheetIdConfigured() } catch (e) { return jsonErr(e.message) }
   const firma   = data.firmenname||kid||'Unternehmen'
   const datum   = Utilities.formatDate(new Date(),'Europe/Berlin','yyyy-MM-dd')
   const docName = 'GoBD_VFD_'+firma.replace(/\s+/g,'_')+'_'+datum
-  const doc     = DocumentApp.create(docName)
+
+  const tpl = (templateDocId || TEMPLATE_DOC_ID || '').toString().trim()
+  const doc = tpl
+    ? DocumentApp.openById(DriveApp.getFileById(tpl).makeCopy(docName).getId())
+    : DocumentApp.create(docName)
+
   const body    = doc.getBody()
+  if (tpl) body.appendPageBreak()
   body.setMarginLeft(72).setMarginRight(72).setMarginTop(80).setMarginBottom(72)
 
   const BLAU = '#1E40AF', HELL = '#EFF6FF', GRAU = '#F9FAFB'
