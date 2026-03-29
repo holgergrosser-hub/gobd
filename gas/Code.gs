@@ -109,6 +109,7 @@ function doListKunden() {
 function doGenerateDoc(data, kid, templateDocId) {
   if (!data) return jsonErr('Keine Daten')
   try { assertSheetIdConfigured() } catch (e) { return jsonErr(e.message) }
+  const ss      = SpreadsheetApp.openById(SHEET_ID)
   const firma   = data.firmenname||kid||'Unternehmen'
   const datum   = Utilities.formatDate(new Date(),'Europe/Berlin','yyyy-MM-dd')
   const docName = 'GoBD_VFD_'+firma.replace(/\s+/g,'_')+'_'+datum
