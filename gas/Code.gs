@@ -14,6 +14,12 @@ const TAB_DATEN    = 'GoBD_Daten'
 const TAB_LOG      = 'Änderungsprotokoll'
 const TAB_KUNDEN   = 'Kundenliste'
 
+function assertSheetIdConfigured() {
+  if (!SHEET_ID || SHEET_ID === 'HIER_DEINE_SHEET_ID_EINTRAGEN') {
+    throw new Error('SHEET_ID ist nicht gesetzt. Bitte in Code.gs die SHEET_ID aus der Google-Sheet-URL eintragen (zwischen /d/ und /edit).')
+  }
+}
+
 function jsonOk(data)    { return ContentService.createTextOutput(JSON.stringify({status:'ok',...data})).setMimeType(ContentService.MimeType.JSON) }
 function jsonErr(msg)    { return ContentService.createTextOutput(JSON.stringify({status:'error',message:msg})).setMimeType(ContentService.MimeType.JSON) }
 
@@ -48,6 +54,7 @@ function doGet(e) {
 // ── SAVE ─────────────────────────────────────────────────────────────────
 function doSave(data, kid) {
   if (!data) return jsonErr('Keine Daten')
+  try { assertSheetIdConfigured() } catch (e) { return jsonErr(e.message) }
   const ss  = SpreadsheetApp.openById(SHEET_ID)
   const sh  = getOrCreate(ss, TAB_DATEN)
   ensureHeaders(sh, ['Feld','Wert','Geändert am'])
@@ -64,6 +71,7 @@ function doSave(data, kid) {
 
 // ── LOAD ─────────────────────────────────────────────────────────────────
 function doLoad(kid) {
+  try { assertSheetIdConfigured() } catch (e) { return jsonErr(e.message) }
   const ss = SpreadsheetApp.openById(SHEET_ID)
   const sh = ss.getSheetByName(TAB_DATEN)
   if (!sh || sh.getLastRow()<2) return jsonOk({data:{},kundenId:kid})
@@ -82,6 +90,7 @@ function doLoad(kid) {
 
 // ── KUNDENLISTE ───────────────────────────────────────────────────────────
 function doListKunden() {
+  try { assertSheetIdConfigured() } catch (e) { return jsonErr(e.message) }
   const ss = SpreadsheetApp.openById(SHEET_ID)
   const sh = ss.getSheetByName(TAB_KUNDEN)
   if (!sh||sh.getLastRow()<2) return jsonOk({kunden:[]})
@@ -94,6 +103,7 @@ function doListKunden() {
 // ── GENERATE DOC ─────────────────────────────────────────────────────────
 function doGenerateDoc(data, kid) {
   if (!data) return jsonErr('Keine Daten')
+  try { assertSheetIdConfigured() } catch (e) { return jsonErr(e.message) }
   const firma   = data.firmenname||kid||'Unternehmen'
   const datum   = Utilities.formatDate(new Date(),'Europe/Berlin','yyyy-MM-dd')
   const docName = 'GoBD_VFD_'+firma.replace(/\s+/g,'_')+'_'+datum
