@@ -14,6 +14,8 @@ const TAB_DATEN    = 'GoBD_Daten'
 const TAB_LOG      = 'Änderungsprotokoll'
 const TAB_KUNDEN   = 'Kundenliste'
 
+const API_VERSION  = '2.0.2'
+
 // Optional: Google Docs Musterdokument (ID aus der URL zwischen /d/ und /edit)
 // Wenn gesetzt, wird beim Erstellen zuerst eine Kopie des Musterdocs erstellt.
 const TEMPLATE_DOC_ID = ''
@@ -44,14 +46,14 @@ function doPost(e) {
     if (action==='load')          return doLoad(kundenId||'default')
     if (action==='list_kunden')   return doListKunden()
     if (action==='generate_doc')  return doGenerateDoc(data, kundenId||'default', templateDocId)
-    if (action==='ping')          return jsonOk({message:'API läuft',version:'2.0'})
+    if (action==='ping')          return jsonOk({message:'API läuft',version:API_VERSION})
     return jsonErr('Unbekannte Action: '+action)
   } catch(err) { Logger.log('FEHLER: %s',err.toString()); return jsonErr(err.toString()) }
 }
 
 function doGet(e) {
   const a = e.parameter.action
-  if (a==='ping') return jsonOk({message:'GoBD API v2 läuft'})
+  if (a==='ping') return jsonOk({message:'GoBD API v2 läuft',version:API_VERSION})
   if (a==='list_kunden') return doListKunden()
   return jsonOk({message:'GoBD API v2'})
 }
