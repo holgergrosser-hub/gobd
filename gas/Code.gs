@@ -115,9 +115,21 @@ function doGenerateDoc(data, kid, templateDocId) {
   const docName = 'GoBD_VFD_'+firma.replace(/\s+/g,'_')+'_'+datum
 
   const tpl = (templateDocId || TEMPLATE_DOC_ID || '').toString().trim()
-  const doc = tpl
-    ? DocumentApp.openById(DriveApp.getFileById(tpl).makeCopy(docName).getId())
-    : DocumentApp.create(docName)
+  let doc
+  if (tpl) {
+    try {
+      const copyId = DriveApp.getFileById(tpl).makeCopy(docName).getId()
+      doc = DocumentApp.openById(copyId)
+    } catch (e) {
+      return jsonErr(
+        'Keine Berechtigung für Drive-Zugriff (Musterdoc kopieren). ' +
+        'Öffne das Apps Script → führe einmal testDoc() aus und bestätige die Berechtigungen (Drive). ' +
+        'Danach: Bereitstellen → Neue Bereitstellung (Web-App). Details: ' + (e && e.message ? e.message : e)
+      )
+    }
+  } else {
+    doc = DocumentApp.create(docName)
+  }
 
   const body    = doc.getBody()
   if (tpl) body.appendPageBreak()
