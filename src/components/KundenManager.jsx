@@ -14,7 +14,10 @@ export default function KundenManager({ gasUrl, kundenId, onSelect }) {
       const fd = new FormData()
       fd.append('action', 'list_kunden')
       const res = await fetch(gasUrl, { method: 'POST', body: fd })
-      const json = await res.json()
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.status === 'error') {
+        throw new Error(json.message || res.statusText || 'Unbekannter Fehler')
+      }
       if (json.kunden) setKunden(json.kunden)
     } catch (e) {
       console.warn('Kundenliste:', e.message)

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function GenerateDoc({ data, gasUrl }) {
+export default function GenerateDoc({ data, gasUrl, kundenId }) {
   const [status, setStatus] = useState('idle')
   const [log, setLog] = useState([])
 
@@ -18,10 +18,14 @@ export default function GenerateDoc({ data, gasUrl }) {
       if (gasUrl) {
         addLog('Sende Daten an Google Apps Script...')
         const fd = new FormData()
-        fd.append('action', 'generate')
+        fd.append('action', 'generate_doc')
+        fd.append('kundenId', kundenId || 'default')
         fd.append('data', JSON.stringify(data))
         const res = await fetch(gasUrl, { method: 'POST', body: fd })
-        const json = await res.json()
+        const json = await res.json().catch(() => ({}))
+        if (!res.ok || json.status === 'error') {
+          throw new Error(json.message || res.statusText || 'Unbekannter Fehler')
+        }
         if (json.docUrl) {
           addLog('✅ Dokument erstellt: ' + json.docUrl, 'success')
           window.open(json.docUrl, '_blank')

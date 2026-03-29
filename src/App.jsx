@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import DocumentUpload from './components/DocumentUpload.jsx'
 import DataForm from './components/DataForm.jsx'
 import DataPreview from './components/DataPreview.jsx'
@@ -49,7 +49,17 @@ export default function App() {
   const [kundenId, setKundenId] = useState(localStorage.getItem('kundenId') || 'default')
   const [saved, setSaved] = useState(false)
 
+  useEffect(() => {
+    if (!gasUrl || !kundenId) return
+    loadFromSheet(kundenId, { alertOnError: false })
+  }, [gasUrl, kundenId])
+
   function selectKunde(id) {
+    if (!id || id === kundenId) return
+    if (!saved) {
+      const ok = window.confirm('Du hast ungespeicherte Änderungen. Wirklich den Kunden wechseln?')
+      if (!ok) return
+    }
     setKundenId(id)
     localStorage.setItem('kundenId', id)
     setSaved(false)
@@ -67,7 +77,11 @@ export default function App() {
     fd.append('kundenId', kundenId)
     fd.append('data', JSON.stringify(data))
     try {
-      await fetch(gasUrl, { method: 'POST', body: fd })
+      const res = await fetch(gasUrl, { method: 'POST', body: fd })
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.status === 'error') {
+        throw new Error(json.message || res.statusText || 'Unbekannter Fehler')
+      }
       setSaved(true)
       alert('✅ Daten erfolgreich ins Google Sheet gespeichert!')
     } catch (e) {
@@ -75,17 +89,23 @@ export default function App() {
     }
   }
 
-  async function loadFromSheet() {
+  async function loadFromSheet(id = kundenId, opts = { alertOnError: true }) {
     if (!gasUrl) return alert('Bitte zuerst die Google Apps Script URL eintragen.')
     const fd = new FormData()
     fd.append('action', 'load')
-    fd.append('kundenId', kundenId)
+    fd.append('kundenId', id)
     try {
       const res = await fetch(gasUrl, { method: 'POST', body: fd })
-      const json = await res.json()
-      if (json.data) { setData({ ...EMPTY_DATA, ...json.data }); setSaved(true) }
+      const json = await res.json().catch(() => ({}))
+      if (!res.ok || json.status === 'error') {
+        throw new Error(json.message || res.statusText || 'Unbekannter Fehler')
+      }
+      const loaded = json.data || {}
+      setData({ ...EMPTY_DATA, ...loaded })
+      setSaved(true)
     } catch (e) {
-      alert('❌ Fehler beim Laden: ' + e.message)
+      if (opts?.alertOnError !== false) alert('❌ Fehler beim Laden: ' + e.message)
+      else console.warn('Load failed:', e)
     }
   }
 
